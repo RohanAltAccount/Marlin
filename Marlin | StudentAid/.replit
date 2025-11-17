@@ -1,0 +1,46 @@
+modules = ["nodejs-20", "web", "postgresql-16"]
+run = "bash -lc 'cd /workspaces/Marlin && export NODE_ENV=${NODE_ENV:-development}; if [ \"$NODE_ENV\" = \"development\" ]; then npm run dev; else npm run start; fi'"
+hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["bash", "-lc", "cd /workspaces/Marlin && npm run build"]
+run = ["bash", "-lc", "cd /workspaces/Marlin && npm run start"]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[[ports]]
+localPort = 46867
+externalPort = 3001
+
+[env]
+PORT = "5000"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Start application"
+
+[[workflows.workflow]]
+name = "Start application"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd /workspaces/Marlin && npm run dev"
+waitForPort = 5000
+
+[agent]
+integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0"]
